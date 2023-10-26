@@ -34,7 +34,7 @@ JobBase is a comprehensive application designed to help users speed up their job
    ```bash
    concurrently "cd backend && node server.js" "cd frontend && npm start"
    ```
-   (preferable first one)
+   (both do the same thing)
 5. **The application should be running at:**   
    ```bash
    localhost:3000
