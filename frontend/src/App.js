@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { Pie, Bar } from 'react-chartjs-2';
 
 function App() {
     const [jobs, setJobs] = useState([]);
     const [formData, setFormData] = useState({});
     const [error, setError] = useState('');
+    const [currentView, setCurrentView] = useState(null); 
 
     useEffect(() => {
         fetch('/')
@@ -38,10 +40,44 @@ function App() {
         setFormData(job);
     };
 
+    const jobTitleCounts = jobs.reduce((acc, job) => {
+        acc[job.jobTitle] = (acc[job.jobTitle] || 0) + 1;
+        return acc;
+    }, {});
+
+    const pieData = {
+        labels: Object.keys(jobTitleCounts),
+        datasets: [{
+            data: Object.values(jobTitleCounts),
+            backgroundColor: [/* Array of colors corresponding to job titles */],
+        }]
+    };
+
+    const applicationDatesCounts = jobs.reduce((acc, job) => {
+        acc[job.applicationDate] = (acc[job.applicationDate] || 0) + 1;
+        return acc;
+    }, {});
+
+    const heatmapColors = Object.values(applicationDatesCounts).map(count => {
+        if (count === 0) return '#FFFFFF';
+        if (count <= 2) return '#CCCCCC';
+        if (count <= 6) return '#666666';
+        return '#000000';
+    });
+
+    const barData = {
+        labels: Object.keys(applicationDatesCounts),
+        datasets: [{
+            label: 'Job Applications',
+            data: Object.values(applicationDatesCounts),
+            backgroundColor: heatmapColors,
+        }]
+    };
+
     return (
-        <div className="App">
+        <div className="App" style={{ filter: currentView ? 'blur(8px)' : 'none' }}>
             <h1>Job Applications</h1>
-            <table>
+            <table className="table-bordered">
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -78,6 +114,45 @@ function App() {
                 <input placeholder="Link" value={formData.link || ''} onChange={e => setFormData({ ...formData, link: e.target.value })} />
                 <button onClick={handleSubmit}>{formData.id ? 'Update' : 'Add'}</button>
             </div>
+            
+            <button onClick={() => setCurrentView('pie')}>Pie Chart</button>
+            <button onClick={() => setCurrentView('heatmap')}>Heatmap</button>
+
+            {currentView && (
+                <div style={{
+                    position: 'fixed',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    zIndex: 1000,
+                    background: 'white',
+                    padding: '20px',
+                    boxShadow: '0 0 10px rgba(0, 0, 0, 0.5)',
+                    borderRadius: '10px',
+                }}>
+                    {currentView === 'pie' && <Pie data={pieData} />}
+                    {currentView === 'heatmap' && <Bar data={barData} />}
+
+                    <button style={{
+                        marginTop: '20px',
+                        display: 'block',
+                        marginLeft: 'auto',
+                        marginRight: 'auto'
+                    }} onClick={() => setCurrentView(null)}>Close</button>
+                </div>
+            )}
+
+            {currentView && (
+                <div onClick={() => setCurrentView(null)} style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'rgba(0, 0, 0, 0.5)',
+                    zIndex: 900
+                }} />
+            )}
         </div>
     );
 }
